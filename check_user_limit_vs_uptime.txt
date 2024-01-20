@@ -1,0 +1,35 @@
+# ==============================
+# Check/Fix ( LimitUptime vs Uptime )
+# by: Chloe Renae & Edmar Lozada
+# ------------------------------
+{
+local iProfile "hsup_JuanFi" ;# <<< Change HotSpot Profile Name
+put "Check/Fix ( LimitUptime vs Uptime ) [ BEG ]"
+local iCtr 1
+foreach nRec in=[/ip hotspot user find where profile=$iProfile (!disabled)] do={
+  local iScr ""
+  local aUser [/ip hotspot user get $nRec]
+  local iUser ($aUser->"name")
+  local iTime ($aUser->"limit-uptime")
+  local iUsed ($aUser->"uptime")
+  local iNote ($aUser->"comment")
+  if ([/ip hotspot active find user=$iUser]!="") do={
+    set iUsed ($iUsed+[/ip hotspot active get [find user=$iUser] uptime])
+  }
+  if ($iUsed>0) do={
+    if ($iTime<=$iUsed) do={
+      #/ip hotspot active remove [find user=$iUser]
+      #/ip hotspot cookie remove [find user=$iUser]
+      #/system scheduler  remove [find name=$iUser]
+      #/ip hotspot user   remove [find name=$iUser]
+      set iScr "[ ERROR! ]"
+    } else={
+      set iScr "[ active ]"
+    }
+    if ([len $iCtr]=1) do={set iCtr "0$iCtr"}
+    put ("$iCtr. $iScr >>> usertime[$iTime] uptime[$iUsed] user[$iUser]")
+    set iCtr ($iCtr+1)
+  }
+}
+put "Check/Fix ( LimitUptime vs Uptime ) [ END ]"
+}
